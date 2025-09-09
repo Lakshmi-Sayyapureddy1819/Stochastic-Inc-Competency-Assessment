@@ -2,3 +2,5 @@ PyMuPDF
 requests
 python-dotenv
 streamlit
+google-generativeai
+

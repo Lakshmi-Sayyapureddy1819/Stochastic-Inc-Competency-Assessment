@@ -1,4 +1,3 @@
-import os
 import google.generativeai as generativeai
 from src.config import GOOGLE_API_KEY
 
@@ -12,12 +11,16 @@ Answer the question based on the document:
 Q: {user_query}
 A:"""
 
-    response = generativeai.chat.completions.create(
-        model="gemini-1",
-        messages=[
-            {"content": prompt, "role": "user"}
-        ],
-        temperature=0.2,
-        max_output_tokens=300
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = generativeai.chat.completions.create(
+            model="gemini-1.5-pro-latest",
+            messages=[
+                {"content": prompt, "role": "user"}
+            ],
+            temperature=0.2,
+            max_output_tokens=300
+        )
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        return f"Error calling Gemini API: {str(e)}"
