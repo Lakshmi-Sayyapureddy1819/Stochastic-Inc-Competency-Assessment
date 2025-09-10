@@ -106,7 +106,7 @@ def document_qa_chat():
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
 
             # Refresh UI to show latest messages
-            st.experimental_rerun()
+            st.rerun()
 
     else:
         st.info("Please upload a PDF document to begin.")
