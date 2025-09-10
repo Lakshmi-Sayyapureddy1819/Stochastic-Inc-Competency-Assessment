@@ -92,7 +92,7 @@ def document_qa_chat():
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
-        # Handle user input and assistant reply in same run
+        # Handle user input and assistant reply in SAME cycle
         prompt = st.chat_input("Ask a question about the document")
         if prompt:
             # Add user message
@@ -105,8 +105,7 @@ def document_qa_chat():
             # Add assistant message
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
 
-            # Refresh UI to show latest messages
-            st.rerun()
+            # 🚫 No st.rerun() needed — response shows immediately
 
     else:
         st.info("Please upload a PDF document to begin.")
