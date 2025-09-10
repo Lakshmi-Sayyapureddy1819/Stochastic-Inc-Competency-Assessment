@@ -1,7 +1,34 @@
 import streamlit as st
+import google.generativeai as genai
+from src.config import GOOGLE_API_KEY
 from src.ingestion import extract_text_from_pdf
-# from src.query_interface import ask_document_qa_agent  # Commented out for testing
 from src.arxiv_integration import search_arxiv
+
+# Configure API key
+genai.configure(api_key=GOOGLE_API_KEY)
+
+def ask_document_qa_agent(document_text, user_query):
+    prompt = f"""You are an AI assistant with access to the following document content:
+{document_text}
+
+Answer the question based on the document:
+Q: {user_query}
+A:"""
+    try:
+        model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        response = model.generate_content(
+            prompt=prompt,
+            temperature=0.7,
+            candidate_count=1
+        )
+        st.write("DEBUG: Full API response object:")
+        st.write(response)
+        if response.candidates and len(response.candidates) > 0:
+            return response.candidates[0].output
+        else:
+            return "No candidates found in response."
+    except Exception as e:
+        return f"Error calling Gemini API: {str(e)}"
 
 def inject_css():
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1470&q=80"
@@ -72,10 +99,7 @@ def document_qa_chat():
 
         if st.session_state.waiting_for_response:
             with st.spinner("Generating answer..."):
-                # Temporary test response to verify output rendering
-                answer = "Test AI answer echoing your question: " + st.session_state.chat_history[-1]["message"]
-                # Replace above with actual API call:
-                # answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
+                answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
             st.session_state.waiting_for_response = False
 
