@@ -1,7 +1,7 @@
-import google.generativeai as generativeai
+import google.generativeai as genai
 from src.config import GOOGLE_API_KEY
 
-generativeai.configure(api_key=GOOGLE_API_KEY)
+genai.configure(api_key=GOOGLE_API_KEY)
 
 def ask_document_qa_agent(document_text, user_query):
     prompt = f"""You are an AI assistant with access to the following document content:
@@ -12,15 +12,9 @@ Q: {user_query}
 A:"""
 
     try:
-        response = generativeai.chat.completions.create(
-            model="gemini-1.5-pro-latest",
-            messages=[
-                {"content": prompt, "role": "user"}
-            ],
-            temperature=0.2,
-            max_output_tokens=300
-        )
-        return response.choices[0].message.content.strip()
+        model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        response = model.generate_content(prompt)
+        return response.text  # This is the generated answer
 
     except Exception as e:
         return f"Error calling Gemini API: {str(e)}"
