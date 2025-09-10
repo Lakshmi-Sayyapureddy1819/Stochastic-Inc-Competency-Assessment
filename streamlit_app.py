@@ -3,27 +3,29 @@ from src.ingestion import extract_text_from_pdf
 from src.query_interface import ask_document_qa_agent
 from src.arxiv_integration import search_arxiv
 
-# Inject custom CSS for background and styling
 def inject_css():
-    st.markdown("""
-        <style>
-            /* Background gradient */
-            .stApp {
-                background: linear-gradient(120deg, #a1c4fd, #c2e9fb);
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                color: #333;
-                padding-top: 1rem;
-            }
-            /* Sidebar style */
-            .sidebar .sidebar-content {
-                background: #d3cce3;
-                padding: 1rem;
-            }
-            /* Chat message styling (optional) */
-            .stChatMessage {
-                font-size: 1.1rem;
-            }
-        </style>
+    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1470&q=80"
+
+    st.markdown(f"""
+    <style>
+        .stApp {{
+            background: linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)),
+                        url("{image_url}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            padding-top: 1rem;
+        }}
+        .sidebar .sidebar-content {{
+            background: rgba(211, 204, 227, 0.85);
+            padding: 1rem;
+        }}
+        .stChatMessage {{
+            font-size: 1.1rem;
+        }}
+    </style>
     """, unsafe_allow_html=True)
 
 def document_qa_interface():
@@ -81,7 +83,7 @@ def arxiv_search_interface():
 
 def main():
     inject_css()
-    
+
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ["Document Q&A Chatbot", "Arxiv Paper Search"])
 
