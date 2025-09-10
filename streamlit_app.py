@@ -1,6 +1,7 @@
 import streamlit as st
 from src.ingestion import extract_text_from_pdf
 from src.query_interface import ask_document_qa_agent
+from src.arxiv_integration import search_arxiv
 
 def main():
     st.set_page_config(
@@ -58,11 +59,26 @@ def main():
             # Append assistant message
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
 
-            # Rerun script to display new messages
-            st.experimental_rerun()
-
     else:
         st.info("Please upload a PDF document to start chatting.")
+
+    st.markdown("---")
+    st.header("Search Research Papers on Arxiv")
+
+    arxiv_query = st.text_input("Enter keywords for Arxiv paper search:", key="arxiv_query")
+
+    if st.button("Search Arxiv Papers"):
+        if arxiv_query.strip():
+            with st.spinner("Searching Arxiv..."):
+                papers = search_arxiv(arxiv_query)
+            if papers:
+                for paper in papers:
+                    st.markdown(f"**Title:** {paper['title']}")
+                    st.markdown(f"**Summary:** {paper['summary']}")
+                    st.markdown(f"[Read Paper]({paper['link']})")
+                    st.markdown("---")
+            else:
+                st.info("No papers found for this query.")
 
 if __name__ == "__main__":
     main()
