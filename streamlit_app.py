@@ -12,7 +12,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 def ask_document_qa_agent(document_text, question):
     """Call Gemini API to answer question based on document text."""
     try:
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-pro")
         response = model.generate_content(
             f"Based on this document, answer the following question:\n\nDocument: {document_text}\n\nQuestion: {question}"
         )
