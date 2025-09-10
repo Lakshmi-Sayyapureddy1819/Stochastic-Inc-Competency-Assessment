@@ -4,87 +4,48 @@ from src.config import GOOGLE_API_KEY
 from src.ingestion import extract_text_from_pdf
 from src.arxiv_integration import search_arxiv
 
-# Configure Gemini API key
+# Configure Gemini API
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# -------------------------------
-# Gemini Q&A helper
-# -------------------------------
-def ask_document_qa_agent(document_text, user_query):
+
+# ============ DOCUMENT QA CHATBOT ============
+def ask_document_qa_agent(document_text, question):
+    """Call Gemini API to answer question based on document text."""
     try:
-        model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        model = genai.GenerativeModel("gemini-pro")
         response = model.generate_content(
-            f"You are an AI assistant with access to this document:\n\n{document_text}\n\n"
-            f"User question: {user_query}"
+            f"Based on this document, answer the following question:\n\nDocument: {document_text}\n\nQuestion: {question}"
         )
-        if response and response.candidates:
-            return response.candidates[0].content.parts[0].text
-        else:
-            return "⚠️ No response generated."
+        return response.text if response and hasattr(response, "text") else "⚠️ No response from Gemini API."
     except Exception as e:
-        return f"Error calling Gemini API: {str(e)}"
+        return f"⚠️ Error: {e}"
 
-# -------------------------------
-# Custom CSS
-# -------------------------------
-def inject_css():
-    image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1470&q=80"
-    st.markdown(f"""
-    <style>
-        .stApp {{
-            background: linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)),
-                        url("{image_url}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-            padding-top: 1rem;
-        }}
-        .sidebar .sidebar-content {{
-            background: rgba(211, 204, 227, 0.85);
-            padding: 1rem;
-        }}
-        .stChatMessage {{
-            font-size: 1.1rem;
-        }}
-        .section-header {{
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }}
-    </style>
-    """, unsafe_allow_html=True)
 
-# -------------------------------
-# Document Q&A Chat
-# -------------------------------
 def document_qa_chat():
-    st.markdown('<div class="section-header">📄 Document Q&A Chatbot with Gemini API</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📄 Document Q&A Chatbot</div>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf"])
 
-    # Session state setup
+    # Session state
     if "document_text" not in st.session_state:
         st.session_state.document_text = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # PDF Upload
+    # Process PDF
     if uploaded_file:
         with st.spinner("Extracting text..."):
             try:
                 with open("temp_uploaded.pdf", "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 st.session_state.document_text = extract_text_from_pdf("temp_uploaded.pdf")
-                st.session_state.chat_history = []  # reset history on new doc
+                st.session_state.chat_history = []
             except Exception as e:
                 st.error(f"Error processing PDF: {e}")
                 st.session_state.document_text = None
 
-    # Show Q&A
+    # Chatbot UI
     if st.session_state.document_text:
-        with st.expander("📄 Document Text Preview"):
+        with st.expander("📄 Document Preview"):
             st.text_area("Document Text", st.session_state.document_text, height=200, disabled=True)
 
         # Show chat history
@@ -92,54 +53,60 @@ def document_qa_chat():
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
-        # Handle user input and assistant reply in SAME cycle
+        # Chat input
         prompt = st.chat_input("Ask a question about the document")
         if prompt:
-            # Add user message
+            # Display user message
             st.session_state.chat_history.append({"role": "user", "message": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-            # Generate assistant response
-            with st.spinner("Generating answer..."):
-                answer = ask_document_qa_agent(st.session_state.document_text, prompt)
+            # Generate assistant response instantly
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    answer = ask_document_qa_agent(st.session_state.document_text, prompt)
+                    st.markdown(answer)
 
-            # Add assistant message
+            # Save assistant reply
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
-
-            # 🚫 No st.rerun() needed — response shows immediately
-
     else:
         st.info("Please upload a PDF document to begin.")
 
-# -------------------------------
-# Arxiv Search
-# -------------------------------
-def arxiv_search_section():
-    st.markdown('<div class="section-header">🔍 Search Research Papers on Arxiv</div>', unsafe_allow_html=True)
-    arxiv_query = st.text_input("Enter keywords for Arxiv paper search:")
-    if st.button("Search Papers"):
-        if arxiv_query.strip():
-            with st.spinner("Searching Arxiv..."):
-                papers = search_arxiv(arxiv_query)
-            if papers:
-                for paper in papers:
-                    st.markdown(f"**Title:** {paper['title']}")
-                    st.markdown(f"**Summary:** {paper['summary']}")
-                    st.markdown(f"[Read Paper]({paper['link']})")
-                    st.markdown("---")
-            else:
-                st.info("No papers found for this query.")
 
-# -------------------------------
-# Main
-# -------------------------------
+# ============ ARXIV PAPER SEARCH ============
+def arxiv_paper_search():
+    st.markdown('<div class="section-header">📚 Arxiv Paper Search</div>', unsafe_allow_html=True)
+    query = st.text_input("Enter a research topic to search papers:")
+    if query:
+        with st.spinner("Searching Arxiv..."):
+            try:
+                results = search_arxiv(query)
+                if results:
+                    for paper in results:
+                        st.markdown(f"### [{paper['title']}]({paper['url']})")
+                        st.markdown(f"**Authors:** {paper['authors']}")
+                        st.markdown(f"**Published:** {paper['published']}")
+                        st.markdown(f"**Summary:** {paper['summary'][:500]}...")
+                        st.markdown("---")
+                else:
+                    st.warning("No results found.")
+            except Exception as e:
+                st.error(f"⚠️ Error: {e}")
+
+
+# ============ MAIN APP ============
 def main():
-    inject_css()
+    st.set_page_config(page_title="Knowledge Assistant", layout="wide")
+    st.title("🔍 Knowledge Assistant")
+
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Choose Section", ["Document Q&A Chatbot", "Arxiv Paper Search"])
-    if page == "Document Q&A Chatbot":
+    section = st.sidebar.radio("Choose Section", ["Document Q&A Chatbot", "Arxiv Paper Search"])
+
+    if section == "Document Q&A Chatbot":
         document_qa_chat()
-    else:
-        arxiv_search_section()
+    elif section == "Arxiv Paper Search":
+        arxiv_paper_search()
+
 
 if __name__ == "__main__":
     main()
