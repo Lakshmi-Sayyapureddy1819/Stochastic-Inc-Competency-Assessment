@@ -35,7 +35,6 @@ def inject_css():
 
 def document_qa_chat():
     st.markdown('<div class="section-header">📄 Document Q&A Chatbot with Gemini API</div>', unsafe_allow_html=True)
-
     uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf"])
 
     if "document_text" not in st.session_state:
@@ -47,34 +46,38 @@ def document_qa_chat():
 
     if uploaded_file:
         with st.spinner("Extracting text..."):
-            with open("temp_uploaded.pdf", "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            st.session_state.document_text = extract_text_from_pdf("temp_uploaded.pdf")
-            st.session_state.chat_history = []
-        st.success("PDF loaded! You can now start asking questions.")
+            try:
+                with open("temp_uploaded.pdf", "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                st.session_state.document_text = extract_text_from_pdf("temp_uploaded.pdf")
+                st.session_state.chat_history = []
+                st.session_state.waiting_for_response = False
+            except Exception as e:
+                st.error(f"Error processing PDF: {e}")
+                st.session_state.document_text = None
 
     if st.session_state.document_text:
         with st.expander("📄 Document Text Preview"):
             st.text_area("Document Text", st.session_state.document_text, height=200, disabled=True)
 
-        # Render chat messages before input
         for chat in st.session_state.chat_history:
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
         if not st.session_state.waiting_for_response:
             prompt = st.chat_input("Ask a question about the document")
-
             if prompt:
-                # Add user message
                 st.session_state.chat_history.append({"role": "user", "message": prompt})
                 st.session_state.waiting_for_response = True
 
-        # If waiting for response, generate AI answer (only once per prompt)
         if st.session_state.waiting_for_response:
-            with st.spinner("Generating answer..."):
-                answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
-            st.session_state.chat_history.append({"role": "assistant", "message": answer})
+            try:
+                with st.spinner("Generating answer..."):
+                    answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
+                st.session_state.chat_history.append({"role": "assistant", "message": answer})
+            except Exception as e:
+                st.error(f"Error generating answer: {e}")
+                st.session_state.chat_history.append({"role": "assistant", "message": "Sorry, an error occurred while generating the answer."})
             st.session_state.waiting_for_response = False
 
     else:
@@ -83,7 +86,6 @@ def document_qa_chat():
 def arxiv_search_section():
     st.markdown('<div class="section-header">🔍 Search Research Papers on Arxiv</div>', unsafe_allow_html=True)
     arxiv_query = st.text_input("Enter keywords for Arxiv paper search:")
-
     if st.button("Search Papers"):
         if arxiv_query.strip():
             with st.spinner("Searching Arxiv..."):
@@ -101,7 +103,6 @@ def main():
     inject_css()
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Choose Section", ["Document Q&A Chatbot", "Arxiv Paper Search"])
-
     if page == "Document Q&A Chatbot":
         document_qa_chat()
     else:
