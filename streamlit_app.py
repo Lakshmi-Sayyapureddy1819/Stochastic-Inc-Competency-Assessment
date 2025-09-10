@@ -4,27 +4,29 @@ from src.config import GOOGLE_API_KEY
 from src.ingestion import extract_text_from_pdf
 from src.arxiv_integration import search_arxiv
 
-# Configure API key
+# Configure the Gemini API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def ask_document_qa_agent(document_text, user_query):
-    prompt = f"""You are an AI assistant with access to the following document content:
-{document_text}
-
-Answer the question based on the document:
-Q: {user_query}
-A:"""
+    messages = [
+        {
+            "role": "system",
+            "content": f"You are an AI assistant with access to the following document content:\n{document_text}"
+        },
+        {
+            "role": "user",
+            "content": user_query
+        }
+    ]
     try:
         model = genai.GenerativeModel("gemini-1.5-pro-latest")
         response = model.generate_content(
-            prompt=prompt,
+            messages=messages,
             temperature=0.7,
             candidate_count=1
         )
-        st.write("DEBUG: Full API response object:")
-        st.write(response)
         if response.candidates and len(response.candidates) > 0:
-            return response.candidates[0].output
+            return response.candidates[0].content  # Adjust if your version uses .message
         else:
             return "No candidates found in response."
     except Exception as e:
