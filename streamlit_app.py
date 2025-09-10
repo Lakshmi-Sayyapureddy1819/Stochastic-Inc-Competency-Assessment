@@ -4,14 +4,14 @@ from src.config import GOOGLE_API_KEY
 from src.ingestion import extract_text_from_pdf
 from src.arxiv_integration import search_arxiv
 
-# Configure the Gemini API key
+# Configure Gemini API key
 genai.configure(api_key=GOOGLE_API_KEY)
 
 def ask_document_qa_agent(document_text, user_query):
     messages = [
         {
             "role": "system",
-            "content": f"You are an AI assistant with access to the following document content:\n{document_text}"
+            "content": f"You are an AI assistant with access to this document content:\n{document_text}"
         },
         {
             "role": "user",
@@ -26,7 +26,8 @@ def ask_document_qa_agent(document_text, user_query):
             candidate_count=1
         )
         if response.candidates and len(response.candidates) > 0:
-            return response.candidates[0].content  # Adjust if your version uses .message
+            # Use .content or .message depending on your version
+            return response.candidates[0].content
         else:
             return "No candidates found in response."
     except Exception as e:
