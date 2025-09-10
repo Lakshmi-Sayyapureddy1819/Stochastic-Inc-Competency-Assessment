@@ -1,6 +1,6 @@
 import streamlit as st
 from src.ingestion import extract_text_from_pdf
-from src.query_interface import ask_document_qa_agent
+# from src.query_interface import ask_document_qa_agent  # Commented out for testing
 from src.arxiv_integration import search_arxiv
 
 def inject_css():
@@ -71,13 +71,12 @@ def document_qa_chat():
                 st.session_state.waiting_for_response = True
 
         if st.session_state.waiting_for_response:
-            try:
-                with st.spinner("Generating answer..."):
-                    answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
-                st.session_state.chat_history.append({"role": "assistant", "message": answer})
-            except Exception as e:
-                st.error(f"Error generating answer: {e}")
-                st.session_state.chat_history.append({"role": "assistant", "message": "Sorry, an error occurred while generating the answer."})
+            with st.spinner("Generating answer..."):
+                # Temporary test response to verify output rendering
+                answer = "Test AI answer echoing your question: " + st.session_state.chat_history[-1]["message"]
+                # Replace above with actual API call:
+                # answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
+            st.session_state.chat_history.append({"role": "assistant", "message": answer})
             st.session_state.waiting_for_response = False
 
     else:
