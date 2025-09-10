@@ -5,7 +5,6 @@ from src.arxiv_integration import search_arxiv
 
 def inject_css():
     image_url = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1470&q=80"
-
     st.markdown(f"""
     <style>
         .stApp {{
@@ -36,6 +35,8 @@ def document_qa_interface():
         st.session_state.document_text = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+    if "new_message" not in st.session_state:
+        st.session_state.new_message = False
 
     if uploaded_file:
         with st.spinner("Extracting text..."):
@@ -49,18 +50,22 @@ def document_qa_interface():
         with st.expander("📄 Document Text Preview"):
             st.text_area("Document Text", st.session_state.document_text, height=200, disabled=True)
 
+        # Display all chat messages
         for chat in st.session_state.chat_history:
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
         prompt = st.chat_input("Ask a question about the document")
-        if prompt:
-            st.session_state.chat_history.append({"role": "user", "message": prompt})
 
-            with st.spinner("Generating answer..."):
-                answer = ask_document_qa_agent(st.session_state.document_text, prompt)
+        if prompt or st.session_state.new_message:
+            if prompt:
+                st.session_state.chat_history.append({"role": "user", "message": prompt})
+                with st.spinner("Generating answer..."):
+                    answer = ask_document_qa_agent(st.session_state.document_text, prompt)
+                st.session_state.chat_history.append({"role": "assistant", "message": answer})
+                st.session_state.new_message = True
 
-            st.session_state.chat_history.append({"role": "assistant", "message": answer})
+            st.session_state.new_message = False
 
     else:
         st.info("Please upload a PDF document to begin.")
@@ -83,10 +88,8 @@ def arxiv_search_interface():
 
 def main():
     inject_css()
-
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ["Document Q&A Chatbot", "Arxiv Paper Search"])
-
     if page == "Document Q&A Chatbot":
         document_qa_interface()
     elif page == "Arxiv Paper Search":
