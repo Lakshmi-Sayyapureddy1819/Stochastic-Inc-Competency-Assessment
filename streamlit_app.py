@@ -69,8 +69,6 @@ def document_qa_chat():
         st.session_state.document_text = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-    if "waiting_for_response" not in st.session_state:
-        st.session_state.waiting_for_response = False
 
     # PDF Upload
     if uploaded_file:
@@ -79,8 +77,7 @@ def document_qa_chat():
                 with open("temp_uploaded.pdf", "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 st.session_state.document_text = extract_text_from_pdf("temp_uploaded.pdf")
-                st.session_state.chat_history = []
-                st.session_state.waiting_for_response = False
+                st.session_state.chat_history = []  # reset history on new doc
             except Exception as e:
                 st.error(f"Error processing PDF: {e}")
                 st.session_state.document_text = None
@@ -95,24 +92,21 @@ def document_qa_chat():
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
-        # Handle user input
-        if not st.session_state.waiting_for_response:
-            prompt = st.chat_input("Ask a question about the document")
-            if prompt:
-                st.session_state.chat_history.append({"role": "user", "message": prompt})
-                st.session_state.waiting_for_response = True
-                st.rerun()
+        # Handle user input and assistant reply in same run
+        prompt = st.chat_input("Ask a question about the document")
+        if prompt:
+            # Add user message
+            st.session_state.chat_history.append({"role": "user", "message": prompt})
 
-        # Handle assistant response
-        if st.session_state.waiting_for_response:
+            # Generate assistant response
             with st.spinner("Generating answer..."):
-                answer = ask_document_qa_agent(
-                    st.session_state.document_text,
-                    st.session_state.chat_history[-1]["message"]
-                )
+                answer = ask_document_qa_agent(st.session_state.document_text, prompt)
+
+            # Add assistant message
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
-            st.session_state.waiting_for_response = False
-            st.rerun()  # ✅ force immediate UI refresh
+
+            # Refresh UI to show latest messages
+            st.experimental_rerun()
 
     else:
         st.info("Please upload a PDF document to begin.")
