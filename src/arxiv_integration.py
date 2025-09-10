@@ -2,7 +2,7 @@ import requests
 import xml.etree.ElementTree as ET
 from src.config import ARXIV_API_URL
 
-def search_arxiv(query, max_results=3):
+def search_arxiv(query, max_results=300):
     params = {
         "search_query": query,
         "start": 0,
