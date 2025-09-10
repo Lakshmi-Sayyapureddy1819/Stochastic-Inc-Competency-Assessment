@@ -24,19 +24,26 @@ def inject_css():
         .stChatMessage {{
             font-size: 1.1rem;
         }}
+        .section-header {{
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }}
     </style>
     """, unsafe_allow_html=True)
 
-def document_qa_interface():
-    st.title("📄 Document Q&A Chatbot with Gemini API")
+def document_qa_chat():
+    st.markdown('<div class="section-header">📄 Document Q&A Chatbot with Gemini API</div>', unsafe_allow_html=True)
+
     uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf"])
 
     if "document_text" not in st.session_state:
         st.session_state.document_text = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-    if "new_message" not in st.session_state:
-        st.session_state.new_message = False
+    if "waiting_for_response" not in st.session_state:
+        st.session_state.waiting_for_response = False
 
     if uploaded_file:
         with st.spinner("Extracting text..."):
@@ -44,35 +51,39 @@ def document_qa_interface():
                 f.write(uploaded_file.getbuffer())
             st.session_state.document_text = extract_text_from_pdf("temp_uploaded.pdf")
             st.session_state.chat_history = []
-        st.success("PDF loaded! Start asking questions.")
+        st.success("PDF loaded! You can now start asking questions.")
 
     if st.session_state.document_text:
         with st.expander("📄 Document Text Preview"):
             st.text_area("Document Text", st.session_state.document_text, height=200, disabled=True)
 
-        # Display all chat messages
+        # Render chat messages before input
         for chat in st.session_state.chat_history:
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
-        prompt = st.chat_input("Ask a question about the document")
+        if not st.session_state.waiting_for_response:
+            prompt = st.chat_input("Ask a question about the document")
 
-        if prompt or st.session_state.new_message:
             if prompt:
+                # Add user message
                 st.session_state.chat_history.append({"role": "user", "message": prompt})
-                with st.spinner("Generating answer..."):
-                    answer = ask_document_qa_agent(st.session_state.document_text, prompt)
-                st.session_state.chat_history.append({"role": "assistant", "message": answer})
-                st.session_state.new_message = True
+                st.session_state.waiting_for_response = True
 
-            st.session_state.new_message = False
+        # If waiting for response, generate AI answer (only once per prompt)
+        if st.session_state.waiting_for_response:
+            with st.spinner("Generating answer..."):
+                answer = ask_document_qa_agent(st.session_state.document_text, st.session_state.chat_history[-1]["message"])
+            st.session_state.chat_history.append({"role": "assistant", "message": answer})
+            st.session_state.waiting_for_response = False
 
     else:
         st.info("Please upload a PDF document to begin.")
 
-def arxiv_search_interface():
-    st.title("🔍 Search Research Papers on Arxiv")
+def arxiv_search_section():
+    st.markdown('<div class="section-header">🔍 Search Research Papers on Arxiv</div>', unsafe_allow_html=True)
     arxiv_query = st.text_input("Enter keywords for Arxiv paper search:")
+
     if st.button("Search Papers"):
         if arxiv_query.strip():
             with st.spinner("Searching Arxiv..."):
@@ -89,11 +100,12 @@ def arxiv_search_interface():
 def main():
     inject_css()
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Document Q&A Chatbot", "Arxiv Paper Search"])
+    page = st.sidebar.radio("Choose Section", ["Document Q&A Chatbot", "Arxiv Paper Search"])
+
     if page == "Document Q&A Chatbot":
-        document_qa_interface()
-    elif page == "Arxiv Paper Search":
-        arxiv_search_interface()
+        document_qa_chat()
+    else:
+        arxiv_search_section()
 
 if __name__ == "__main__":
     main()
