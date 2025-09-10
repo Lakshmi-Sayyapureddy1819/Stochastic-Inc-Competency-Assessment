@@ -82,28 +82,25 @@ def document_qa_chat():
         with st.expander("📄 Document Text Preview"):
             st.text_area("Document Text", st.session_state.document_text, height=200, disabled=True)
 
-        # Show chat history
+        # 🔑 Show full chat history (user + assistant)
         for chat in st.session_state.chat_history:
             with st.chat_message(chat["role"]):
                 st.markdown(chat["message"])
 
-        # Handle user input
+        # Handle new input
         prompt = st.chat_input("Ask a question about the document")
         if prompt:
-            # Save + display user message
+            # Append user message
             st.session_state.chat_history.append({"role": "user", "message": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
 
-            # Generate + display assistant response
-            with st.chat_message("assistant"):
-                with st.spinner("Generating answer..."):
-                    answer = ask_document_qa_agent(st.session_state.document_text, prompt)
-                    st.markdown(answer)
+            # Generate assistant response
+            answer = ask_document_qa_agent(st.session_state.document_text, prompt)
 
-            # Save assistant reply
+            # Append assistant message
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
 
+            # 🔄 Force rerun to immediately show conversation
+            st.rerun()
     else:
         st.info("Please upload a PDF document to begin.")
 
