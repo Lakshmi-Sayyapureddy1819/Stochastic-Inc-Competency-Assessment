@@ -42,3 +42,88 @@ The app features a clean conversational chat UI, smooth user experience, and a v
 
 ### Install Dependencies
 
+```
+pip install -r requirements.txt
+```
+
+*Example `requirements.txt` content:*
+
+```
+streamlit>=1.22
+google-generativeai
+pdfplumber
+requests
+python-dotenv
+```
+
+### Run the app locally
+
+```
+streamlit run streamlit_app.py
+```
+
+---
+
+## Project Structure
+
+```
+project_root/
+│
+├── streamlit_app.py            # Main Streamlit app entry point
+├── requirements.txt            # Python dependencies
+├── README.md                   # This documentation file
+├── background.jpg              # Background image (optional if local image used)
+├── src/
+│   ├── ingestion.py            # PDF text extraction logic
+│   ├── query_interface.py      # Gemini API query function
+│   ├── arxiv_integration.py    # Arxiv paper search functions
+│   └── config.py               # API Key and config variables
+└── ...
+```
+
+---
+
+## Usage
+
+### Document Q&A Chatbot
+
+1. Upload a PDF document via the sidebar in the “Document Q&A Chatbot” page.  
+2. Wait for text extraction confirmation.  
+3. Ask any number of questions related to the document using the chat input box.  
+4. View previous questions and AI answers as chat bubbles in the conversation area.
+
+### Arxiv Paper Search
+
+1. Switch to the “Arxiv Paper Search” page via sidebar navigation.  
+2. Enter your desired keywords related to research topics.  
+3. Click “Search Papers” to get a list of relevant research papers with title, brief summary, and links.
+
+---
+
+## Customization
+
+- Change the background image by updating the URL or local file path in `inject_css()` function in `streamlit_app.py`.  
+- Adjust UI colors and fonts via embedded CSS in the same function.  
+- Update the Gemini model version or parameters inside `src/query_interface.py`.
+
+---
+
+## Troubleshooting
+
+- Ensure your Google Gemini API key is correctly set in `src/config.py`.  
+- Make sure Streamlit version is updated to **1.22 or newer** for chat functionality.  
+- If you face import errors like `ModuleNotFoundError`, verify all dependencies are installed via `pip install -r requirements.txt`.  
+- Monitor console logs for detailed error traces during API calls.
+
+---
+
+## Acknowledgments
+
+- [Google Gemini API](https://developers.generativeai.google/) for powerful conversational AI.  
+- [arXiv.org](https://arxiv.org/help/api) for accessible research paper data.  
+- Unsplash for beautiful background images (https://unsplash.com).
+
+---
+
+For any questions or further support, please contact the developer.
+
