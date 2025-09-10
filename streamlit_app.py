@@ -3,6 +3,29 @@ from src.ingestion import extract_text_from_pdf
 from src.query_interface import ask_document_qa_agent
 from src.arxiv_integration import search_arxiv
 
+# Inject custom CSS for background and styling
+def inject_css():
+    st.markdown("""
+        <style>
+            /* Background gradient */
+            .stApp {
+                background: linear-gradient(120deg, #a1c4fd, #c2e9fb);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                color: #333;
+                padding-top: 1rem;
+            }
+            /* Sidebar style */
+            .sidebar .sidebar-content {
+                background: #d3cce3;
+                padding: 1rem;
+            }
+            /* Chat message styling (optional) */
+            .stChatMessage {
+                font-size: 1.1rem;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
 def document_qa_interface():
     st.title("📄 Document Q&A Chatbot with Gemini API")
     uploaded_file = st.file_uploader("Upload a PDF document", type=["pdf"])
@@ -31,10 +54,12 @@ def document_qa_interface():
         prompt = st.chat_input("Ask a question about the document")
         if prompt:
             st.session_state.chat_history.append({"role": "user", "message": prompt})
+
             with st.spinner("Generating answer..."):
                 answer = ask_document_qa_agent(st.session_state.document_text, prompt)
+
             st.session_state.chat_history.append({"role": "assistant", "message": answer})
-            st.experimental_rerun()
+
     else:
         st.info("Please upload a PDF document to begin.")
 
@@ -55,6 +80,8 @@ def arxiv_search_interface():
                 st.info("No papers found for this query.")
 
 def main():
+    inject_css()
+    
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ["Document Q&A Chatbot", "Arxiv Paper Search"])
 
